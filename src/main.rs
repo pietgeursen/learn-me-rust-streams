@@ -30,14 +30,17 @@ fn stream_fun() {
     println!("starting up");
 
     let stream = stream::iter_ok::<_ , ()>(vec![1,2,3])
-        .map_err(|e| println!("error = {:?}", e))
         .for_each(|val| {
-            tokio::spawn(future::lazy(move ||{
+            let soon = Instant::now()
+                .add(Duration::new(val,0));
+            let delay = Delay::new(soon);
+            let log = future::lazy(move ||{
                 println!("{}", val);
                 Ok(())
-            }))
+            });
+
+            tokio::spawn(delay.then(|_|{log}))
         });
-    
 
     tokio::run(stream);
     println!("done");
