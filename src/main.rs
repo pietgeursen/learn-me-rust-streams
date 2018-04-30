@@ -21,7 +21,8 @@ fn future_fun() {
 
     rt.spawn(f);
     rt.shutdown_on_idle()
-        .wait().unwrap();
+        .wait()
+        .unwrap();
     println!("done");
 }
 
@@ -34,12 +35,16 @@ fn stream_fun() {
             let soon = Instant::now()
                 .add(Duration::new(val,0));
             let delay = Delay::new(soon);
+
             let log = future::lazy(move ||{
                 println!("{}", val);
                 Ok(())
             });
 
-            tokio::spawn(delay.then(|_|{log}))
+            tokio::spawn(log
+                         .then(|_: Result<(),()>| {delay})
+                         .then(|_|{Ok(())}
+                               ))
         });
 
     tokio::run(stream);
